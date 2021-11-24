@@ -12,7 +12,8 @@ https://user-images.githubusercontent.com/90883561/143239312-8d9054a0-6cbe-4ef9-
 
 
 보드 B의 동작 영상
-왼쪽에 화면이 lightRelay.py를 실행 했을 때, 오른쪽이 보드 B의 코드와 Serial화면이다.
+왼쪽에 화면이 lightRelay.py를 실행 했을 때, 오른쪽이 보드 B의 코드와 Serial화면이다. 
+
 https://user-images.githubusercontent.com/90883561/143240345-326ffe9a-5e2f-488b-aa77-d6dbf47c30ae.mp4
 
 
