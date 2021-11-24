@@ -12,12 +12,22 @@ ESP8266WebServer    webServer(80);
 char                eRead[30];
 char                ssid[30];
 char                password[30];
-
+char                mqttServer[30];
 const int           mqttPort = 1883;
 int relay = 15;
 
-unsigned long       pubInterval = 5000;
-unsigned long       lastPublished = - pubInterval;
+String responseHTML = ""
+    "<!DOCTYPE html><html><head><title>CaptivePortal</title></head><body><center>"
+    "<p>Captive Sample Server App</p>"
+    "<form action='/save'>"
+    "<p><input type='text' name='ssid' placeholder='SSID' onblur='this.value=removeSpaces(this.value);'></p>"
+    "<p><input type='text' name='password' placeholder='WLAN Password'></p>"
+    "<p><input type='text' name='mqttServer' placeholder='mqttServer address'></p>"
+    "<p><input type='submit' value='Submit'></p></form>"
+    "<p>This is a captive portal example</p></center></body>"
+    "<script>function removeSpaces(string) {"
+    "   return string.split(' ').join('');"
+    "}</script></html>";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
