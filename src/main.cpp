@@ -24,7 +24,6 @@ String responseHTML = ""
     "<p><input type='text' name='password' placeholder='WLAN Password'></p>"
     "<p><input type='text' name='mqttServer' placeholder='mqttServer address'></p>"
     "<p><input type='submit' value='Submit'></p></form>"
-    "<p>This is a captive portal example</p></center></body>"
     "<script>function removeSpaces(string) {"
     "   return string.split(' ').join('');"
     "}</script></html>";
@@ -33,6 +32,70 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 char topic[30] = "deviceid/Yuning/cmd/lamp";
+
+// Saves string to EEPROM
+void SaveString(int startAt, const char* id) { 
+    for (byte i = 0; i <= strlen(id); i++) {
+        EEPROM.write(i + startAt, (uint8_t) id[i]);
+    }
+    EEPROM.commit();
+}
+
+// Reads string from EEPROM
+void ReadString(byte startAt, byte bufor) {
+    for (byte i = 0; i <= bufor; i++) {
+        eRead[i] = (char)EEPROM.read(i + startAt);
+    }
+}
+
+void save(){
+    Serial.println("button pressed");
+    Serial.println(webServer.arg("ssid"));
+    SaveString( 0, (webServer.arg("ssid")).c_str());
+    SaveString(30, (webServer.arg("password")).c_str());
+    SaveString(60, (webServer.arg("mqttServer")).c_str());
+    webServer.send(200, "text/plain", "OK");
+    ESP.restart();
+}
+
+void configWiFi() {
+    const byte DNS_PORT = 53;
+    IPAddress apIP(192, 168, 1, 1);
+    DNSServer dnsServer;
+    
+    WiFi.mode(WIFI_AP);
+    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+    WiFi.softAP("Yun");     // change this to your portal SSID
+    
+    dnsServer.start(DNS_PORT, "*", apIP);
+
+    webServer.on("/save", save);
+
+    webServer.onNotFound([]() {
+        webServer.send(200, "text/html", responseHTML);
+    });
+    webServer.begin();
+    while(true) {
+        dnsServer.processNextRequest();
+        webServer.handleClient();
+        yield();
+    }
+}
+
+void load_config_wifi() {
+    ReadString(0, 30);
+    if (!strcmp(eRead, "")) {
+        Serial.println("Config Captive Portal started");
+        configWiFi();
+    } else {
+        Serial.println("IOT Device started");
+        strcpy(ssid, eRead);
+        ReadString(30, 30);
+        strcpy(password, eRead);
+        ReadString(60,30);
+        strcpy(mqttServer, eRead);
+    }
+}
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived : ");
@@ -55,14 +118,26 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  EEPROM.begin(EEPROM_LENGTH);
+  pinMode(relay, OUTPUT);
+  pinMode(RESET_PIN, INPUT_PULLUP);
+
+  load_config_wifi();
+
   WiFi.mode(WIFI_STA); 
   WiFi.begin(ssid, password);
-  pinMode(relay, OUTPUT);
+  
+  int i = 0;
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+      delay(500);
+      Serial.print(".");
+      if(i++ > 15) {
+          configWiFi();
+      }
   }
-  Serial.println("Connected to the WiFi network");
+  Serial.print("Connected to "); Serial.println(ssid);
+  Serial.print("IP address: "); Serial.println(WiFi.localIP());
+
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
   while (!client.connected()) {
