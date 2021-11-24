@@ -1,10 +1,18 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <EEPROM.h>
+#include <ESP8266mDNS.h>
 
-const char*         ssid ="U+Net43B0";
-const char*         password = "DD9D033347";
-const char*         mqttServer = "52.4.159.58";
+#define             EEPROM_LENGTH 1024
+#define             RESET_PIN 0
+ESP8266WebServer    webServer(80);
+char                eRead[30];
+char                ssid[30];
+char                password[30];
+
 const int           mqttPort = 1883;
 int relay = 15;
 
